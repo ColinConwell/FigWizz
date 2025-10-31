@@ -1,0 +1,17 @@
+# Project
+xyzopt
+
+# IDE Cache
+.vscode/
+.cursor/
+.cursorignore
+.jupyter/
+
+# Packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# MkDocs
+site/

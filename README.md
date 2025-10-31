@@ -1,2 +1,3 @@
-# FigWiz
-Python toolkit for programmatic scientific figure design
+# FigWizz
+
+Python toolkit for programmatic figure design
