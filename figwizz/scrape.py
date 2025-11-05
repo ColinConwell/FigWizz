@@ -22,7 +22,7 @@ __all__ = [
 
 def download_stock_images(query, n_images, output_dir, provider='pixabay', api_key=None):
     if provider not in ['pixabay', 'unsplash']:
-        raise ValueError("Invalid provider: {provider}. Must be 'pixabay' or 'unsplash'.")
+        raise ValueError(f"Invalid provider: {provider}. Must be 'pixabay' or 'unsplash'.")
     
     if provider == 'pixabay':
         return download_pixabay_images(query, n_images, output_dir, api_key)
@@ -35,69 +35,126 @@ def download_pixabay_images(query, n_images, output_dir, api_key=None):
     if api_key is None:
         api_key = os.getenv('PIXABAY_API_KEY')
     if api_key is None:
-        raise ValueError("PIXABAY_API_KEY is not set in the environment variables.",
-                         "Set it in the .env file or pass it as an argument.")
+        raise ValueError(
+            "PIXABAY_API_KEY is not set in the environment variables. "
+            "Set it in the .env file or pass it as an argument."
+        )
         
     url = f"https://pixabay.com/api/?key={api_key}&q={query}&image_type=photo&per_page=200"
-    response = requests.get(url).json()
-    images = response['hits'][:n_images]
+    
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as e:
+        raise RuntimeError(f"Failed to fetch images from Pixabay: {e}")
+    except ValueError as e:
+        raise RuntimeError(f"Failed to parse Pixabay response: {e}")
+    
+    if 'hits' not in data:
+        raise RuntimeError(f"Unexpected Pixabay API response format: {data}")
+    
+    images = data['hits'][:n_images]
+    
+    if not images:
+        print(f"Warning: No images found for query '{query}'")
+        return []
     
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         
     previous_downloads = glob(f"{output_dir}/*.jpg")
+    start_index = len(previous_downloads)
+    
+    saved_images = []
 
     for index, image in enumerate(images):
-        index += len(previous_downloads)
+        actual_index = start_index + index
         image_url = image['largeImageURL']
-        image_id = f"image_{index + 1}"
+        image_id = f"image_{actual_index + 1}"
         
         image_path = f"{output_dir}/{image_id}.jpg"
         json_path = f"{output_dir}/{image_id}.json"
         
         # Download image
-        img_data = requests.get(image_url).content
-        with open(image_path, 'wb') as handler:
-            handler.write(img_data)
+        try:
+            img_data = requests.get(image_url, timeout=30).content
+            with open(image_path, 'wb') as handler:
+                handler.write(img_data)
+            saved_images.append(image_path)
+        except requests.RequestException as e:
+            print(f"Warning: Failed to download image {image_url}: {e}")
+            continue
         
         # Prepare metadata
         metadata = {
-            'Image_URL': image_url, **image,
+            'Image_URL': image_url, 
+            'Image_Path': image_path,
+            **image,
         }
         
         # Save metadata as JSON
         with open(json_path, 'w') as json_file:
             json.dump(metadata, json_file, indent=4)
+    
+    print(f"Successfully downloaded {len(saved_images)} images to {output_dir}")
+    return saved_images
 
 # Function to download images from Unsplash
 def download_unsplash_images(query, n_images, output_dir, api_key=None):
     if api_key is None:
         api_key = os.getenv('UNSPLASH_ACCESS_KEY')
     if api_key is None:
-        raise ValueError("UNSPLASH_ACCESS_KEY is not set in the environment variables.",
-                         "Set it in the .env file or pass it as an argument.")
+        raise ValueError(
+            "UNSPLASH_ACCESS_KEY is not set in the environment variables. "
+            "Set it in the .env file or pass it as an argument."
+        )
         
     url = f"https://api.unsplash.com/search/photos?query={query}&per_page={n_images}&client_id={api_key}"
-    response = requests.get(url).json()
-    images = response['results']
+    
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as e:
+        raise RuntimeError(f"Failed to fetch images from Unsplash: {e}")
+    except ValueError as e:
+        raise RuntimeError(f"Failed to parse Unsplash response: {e}")
+    
+    if 'results' not in data:
+        raise RuntimeError(f"Unexpected Unsplash API response format: {data}")
+    
+    images = data['results']
+
+    if not images:
+        print(f"Warning: No images found for query '{query}'")
+        return []
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         
     previous_downloads = glob(f"{output_dir}/*.jpg")
+    start_index = len(previous_downloads)
+    
+    saved_images = []
 
     for index, image in enumerate(images):
-        index += len(previous_downloads)
+        actual_index = start_index + index
         image_url = image['urls']['full']
-        image_id = f"image_{index + 1}"
+        image_id = f"image_{actual_index + 1}"
         
         image_path = f"{output_dir}/{image_id}.jpg"
         json_path = f"{output_dir}/{image_id}.json"
         
         # Download image
-        img_data = requests.get(image_url).content
-        with open(image_path, 'wb') as handler:
-            handler.write(img_data)
+        try:
+            img_data = requests.get(image_url, timeout=30).content
+            with open(image_path, 'wb') as handler:
+                handler.write(img_data)
+            saved_images.append(image_path)
+        except requests.RequestException as e:
+            print(f"Warning: Failed to download image {image_url}: {e}")
+            continue
         
         # Prepare metadata
         metadata = {
@@ -108,16 +165,19 @@ def download_unsplash_images(query, n_images, output_dir, api_key=None):
             'Page_URL': image['links']['html'],
             'Description': image.get('description', ''),
             'Alt_Description': image.get('alt_description', ''),
-            'Tags': [tag['title'] for tag in image['tags']],
+            'Tags': [tag['title'] for tag in image.get('tags', [])],
             'Image_Width': image['width'],
             'Image_Height': image['height'],
             'Likes': image['likes'],
-            'Downloads': image.get('downloads', 'N/A')  # Note: downloads data may not always be present
+            'Downloads': image.get('downloads', 'N/A')
         }
         
         # Save metadata as JSON
         with open(json_path, 'w') as json_file:
             json.dump(metadata, json_file, indent=4)
+    
+    print(f"Successfully downloaded {len(saved_images)} images to {output_dir}")
+    return saved_images
             
 # Source Image Extraction Functions ----------------------------------------
 

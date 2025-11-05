@@ -1,8 +1,23 @@
+"""
+Image modification and transformation utilities.
+
+This module provides functions for modifying images, including adding
+opaque backgrounds and cropping to n-sided polygon shapes (hexagons, etc.).
+
+Example:
+    >>> from figwizz.modify import ngon_crop, make_image_opaque
+    >>> # Create hexagon-shaped crop
+    >>> hexagon = ngon_crop('image.png', sides=6, border_size=5)
+    >>> # Make RGBA image opaque
+    >>> opaque_img = make_image_opaque(rgba_image)
+"""
+
 from copy import copy
 from PIL import Image, ImageDraw, ImageChops
 import math
 
 from .colors import parse_color, extract_dominant_color, get_contrasting_color
+from .utils.images import normalize_image_input
 
 __all__ = ['make_image_opaque', 'ngon_crop']
 
@@ -11,18 +26,15 @@ def make_image_opaque(img_input, bg_color=(255, 255, 255)):
     Make an image opaque by adding a white background.
     
     Args:
-        img_input: Path to the image file or PIL Image object.
+        img_input: Image in any supported format (path, PIL Image, bytes, numpy array, etc.).
         bg_color: Background color (default: white).
     
     Returns:
         PIL Image object with a white background.
     """
-    # if input is path, load it as image
-    if isinstance(img_input, str):
-        img = Image.open(img_input)
-        
-    else: # assume input is image
-        img = copy(img_input)
+    # Normalize input to PIL Image
+    img = normalize_image_input(img_input)
+    img = copy(img)
     
     # Check if the image has an alpha channel
     if img.mode in ('RGBA', 'LA') or ('transparency' in img.info):
@@ -47,7 +59,7 @@ def ngon_crop(img_input, sides=6, crop_size=None, shift_x=0, shift_y=0,
     Useful for creating tidyverse-style hexicons and other polygonal image crops.
     
     Args:
-        img_input: Path to the image file or PIL Image object.
+        img_input: Image in any supported format (path, PIL Image, bytes, numpy array, etc.).
         sides: Number of sides of the polygon (default: 6 for hexagon).
         crop_size: Size of the output image as (width, height). If None, uses a square 
                    based on the smallest dimension of the input image.
@@ -76,11 +88,9 @@ def ngon_crop(img_input, sides=6, crop_size=None, shift_x=0, shift_y=0,
         >>> # Create a pentagon with no border
         >>> img = ngon_crop("input.png", sides=5)
     """
-    # Load image
-    if isinstance(img_input, str):
-        img = Image.open(img_input)
-    else:
-        img = copy(img_input)
+    # Normalize input to PIL Image
+    img = normalize_image_input(img_input)
+    img = copy(img)
     
     # Convert to RGBA if necessary
     if img.mode not in ('RGB', 'RGBA'):

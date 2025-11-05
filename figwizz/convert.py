@@ -1,8 +1,22 @@
+"""
+Image format conversion utilities.
+
+This module provides functions for converting images between different formats,
+handling various input types (paths, bytes, PIL Images, etc.), and processing
+SVG files.
+
+Example:
+    >>> from figwizz.convert import convert_image
+    >>> convert_image('input.png', 'jpg')
+    'input.jpg'
+"""
+
 import os, base64
 from PIL import Image
 from io import BytesIO
 
 from .modify import make_image_opaque
+from .utils.images import normalize_image_input, save_image
 
 __all__ = [
     'convert_image', 
@@ -16,44 +30,38 @@ def convert_image(source_path, target_format, delete_original=False):
     """Convert an image file to another format.
     
     Args:
-        source_path (str): Path to the source image file.
-        target_format (str): Target format to convert to (e.g., 'jpg', 'png', 'pdf').
-        **kwargs: Additional keyword arguments.
-            remove_original (bool): Whether to remove the original file. Defaults to True.
+        source_path: Path to the source image file, or any supported image input type.
+        target_format: Target format to convert to (e.g., 'jpg', 'png', 'pdf').
+        delete_original: Whether to remove the original file. Defaults to False.
+            Only applies if source_path is a file path string.
             
     Returns:
         str: Path to the converted image file.
     """
-    source_ext = source_path.split('.')[-1]
-    if source_ext not in ['png', 'jpg', 'jpeg', 'pdf', 'svg']:
-        raise ValueError(f"Invalid source path: {source_path}. ",
-                         "Source path must end with .png, .jpg, .jpeg, .pdf, or .svg.")
-    
+    # Normalize input to PIL Image
+    img = normalize_image_input(source_path)
     
     # Ensure the target format does not start with a dot
     if target_format.startswith('.'):
         target_format = target_format[1:]
     
-    # Load the image with PIL:
-    img = Image.open(source_path)
+    # Determine output path
+    if isinstance(source_path, str) and not source_path.startswith(('http://', 'https://', 'data:')):
+        base = os.path.splitext(source_path)[0]
+        target_path = f"{base}.{target_format.lower()}"
+    else:
+        # For non-path inputs, use a temp name
+        target_path = f"converted_image.{target_format.lower()}"
     
-    if target_format in ['jpg', 'pdf']:
-        img = make_image_opaque(img)
+    # Use unified save_image function
+    result_path = save_image(img, target_path, format=target_format.upper())
     
-    # Define the new filename
-    base = os.path.splitext(source_path)[0]
-    target_path = f"{base}.{target_format.lower()}"
-    
-    # Convert and save the image
-    if source_ext == 'svg':
-        svg_to_image(img, target_path)
-    else: # assume raster image
-        img.save(target_path, target_format.upper())
-    
-    if delete_original:
-        os.remove(source_path)
+    # Delete original if requested and it's a file path
+    if delete_original and isinstance(source_path, str):
+        if os.path.exists(source_path):
+            os.remove(source_path)
 
-    return target_path # return the new path
+    return result_path
 
 def bytes_to_image(bytes_input):
     """Convert bytes to a PIL Image object.

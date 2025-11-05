@@ -1,14 +1,28 @@
+"""
+Image display and grid layout utilities.
+
+This module provides functions for displaying images in matplotlib-based
+grid layouts with customizable configurations.
+
+Example:
+    >>> from figwizz.display import make_image_grid
+    >>> images = ['img1.png', 'img2.png', 'img3.png']
+    >>> fig, axes = make_image_grid(images, titles=['A', 'B', 'C'])
+    >>> plt.show()
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from math import ceil
+from .utils.images import normalize_image_input
 
 def make_image_grid(images, titles=None, max_cols=None, show_index=False, 
                     figsize=None, title_fontsize=10, show_axes=False):
     """
-    Plot a list of PIL images in a grid layout.
+    Plot a list of images in a grid layout.
     
     Args:
-        images: List of PIL Image objects
+        images: List of images in any supported format (paths, PIL Images, bytes, etc.)
         titles: Optional list of titles for each image
         max_cols: Maximum number of columns (auto-calculated if None)
         show_index: Whether to show the index of each image
@@ -22,6 +36,9 @@ def make_image_grid(images, titles=None, max_cols=None, show_index=False,
     if not images:
         print("No images to display")
         return None, None
+    
+    # Normalize all images to PIL format
+    images = [normalize_image_input(img) for img in images]
     
     n_images = len(images)
     

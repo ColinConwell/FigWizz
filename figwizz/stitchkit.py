@@ -1,3 +1,19 @@
+"""
+Slide conversion and PDF stitching utilities.
+
+This module provides functions for converting presentation slides (PowerPoint, Keynote)
+to images and PDFs, with support for whitespace cropping and batch processing.
+
+Platform Support:
+    - macOS: Uses AppleScript for Keynote and PowerPoint
+    - Windows: Uses COM interface for PowerPoint
+    - Linux: Uses LibreOffice command-line tools
+
+Example:
+    >>> from figwizz.stitchkit import slides_to_images
+    >>> slides_to_images('presentation.pptx', 'output_folder', crop_images=True)
+"""
+
 import os, re
 import glob
 import subprocess
@@ -260,9 +276,12 @@ def convert_to_pdf(image_path, output_path=None, dpi=300, **kwargs):
     
     if os.path.isdir(image_path):
         for filename in os.listdir(image_path):
-            if filename.lower().endswith('.png', '.jpg', '.jpeg', '.tiff', '.tif'):
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif')):
                 source_file = os.path.join(image_path, filename)
-                output_file = os.path.join(output_path, os.path.splitext(filename)[0] + '.pdf')
+                if output_path:
+                    output_file = os.path.join(output_path, os.path.splitext(filename)[0] + '.pdf')
+                else:
+                    output_file = os.path.join(image_path, os.path.splitext(filename)[0] + '.pdf')
                 print(f'Converting {source_file} to {output_file}...')
                 image = Image.open(source_file)
                 # Convert to RGB mode if necessary
@@ -272,7 +291,10 @@ def convert_to_pdf(image_path, output_path=None, dpi=300, **kwargs):
                     image = background
                 image.save(output_file, 'PDF', resolution=dpi)
     else:
-        output_file = os.path.splitext(output_path)[0] + '.pdf'
+        if output_path:
+            output_file = os.path.splitext(output_path)[0] + '.pdf'
+        else:
+            output_file = os.path.splitext(image_path)[0] + '.pdf'
         image = Image.open(image_path)
         if image.mode in ('RGBA', 'LA'):
             background = Image.new('RGB', image.size, (255, 255, 255))

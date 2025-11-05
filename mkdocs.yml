@@ -1,0 +1,61 @@
+site_name: FigWizz
+site_description: Python toolkit for programmatic figure design
+site_url: https://colinconwell.github.io/FigWizard
+repo_url: https://github.com/ColinConwell/FigWizard
+repo_name: FigWizard
+docs_dir: webdocs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+  features:
+    - navigation.sections
+    - navigation.tracking
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quick Start: quickstart.md
+  - Workflows:
+      - Image Conversion: workflows/image_conversion.md
+      - Image Modification: workflows/image_modification.md
+      - Scraping Images: workflows/scraping.md
+      - Presentations: workflows/presentations.md
+      - Icons & Hexicons: workflows/icons.md
+      - AI Generation: workflows/genai.md
+  - API Reference: api/reference.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: true
+            docstring_style: google
+            inherited_members: true
+            show_root_heading: true
+            show_root_full_path: false
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - codehilite
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html

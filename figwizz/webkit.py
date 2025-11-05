@@ -1,3 +1,14 @@
+"""
+Web utilities for URL handling and response processing.
+
+This module provides utilities for working with web resources,
+including PDF detection and response object conversion.
+
+Example:
+    >>> from figwizz.webkit import is_url_a_pdf
+    >>> is_pdf = is_url_a_pdf('http://example.com/document.pdf')
+"""
+
 import requests
 
 __all__ = [
