@@ -1,10 +1,11 @@
 """
-Figure scraping functions
+Figure / image scraping functions
 """
 
-import sys
+import os, sys, json
 import tempfile
 import requests
+from glob import glob
 from pathlib import Path
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
@@ -12,44 +13,113 @@ from PIL import Image
 from io import BytesIO
 
 __all__ = [
-    'convert_svg_to_png',
+    'download_stock_images',
     'extract_images_from_pdf',
     'extract_images_from_url',
 ]
 
-def convert_svg_to_png(svg_content, output_path, width=None, height=None, scale=None):
-    """
-    Convert SVG content to PNG.
+# Stock Image Download Functions ----------------------------------------
+
+def download_stock_images(query, n_images, output_dir, provider='pixabay', api_key=None):
+    if provider not in ['pixabay', 'unsplash']:
+        raise ValueError("Invalid provider: {provider}. Must be 'pixabay' or 'unsplash'.")
     
-    Args:
-        svg_content: Raw SVG file content (bytes)
-        output_path: Path to save the PNG file
-        width: Optional width for output PNG (in pixels)
-        height: Optional height for output PNG (in pixels)
-        scale: Optional scale factor (e.g., 2.0 for 2x resolution)
+    if provider == 'pixabay':
+        return download_pixabay_images(query, n_images, output_dir, api_key)
+    elif provider == 'unsplash':
+        return download_unsplash_images(query, n_images, output_dir, api_key)
     
-    Returns:
-        True if successful, False otherwise
-    """
-    try:
-        import cairosvg  # type: ignore
-    except ImportError:
-        print("  Warning: cairosvg not installed, cannot convert SVG to PNG")
-        print("  Install with: pip install cairosvg")
-        return False
+
+# Function to download images from Pixabay
+def download_pixabay_images(query, n_images, output_dir, api_key=None):
+    if api_key is None:
+        api_key = os.getenv('PIXABAY_API_KEY')
+    if api_key is None:
+        raise ValueError("PIXABAY_API_KEY is not set in the environment variables.",
+                         "Set it in the .env file or pass it as an argument.")
+        
+    url = f"https://pixabay.com/api/?key={api_key}&q={query}&image_type=photo&per_page=200"
+    response = requests.get(url).json()
+    images = response['hits'][:n_images]
     
-    try:
-        cairosvg.svg2png(
-            bytestring=svg_content,
-            write_to=str(output_path),
-            output_width=width,
-            output_height=height,
-            scale=scale
-        )
-        return True
-    except Exception as e:
-        print(f"  Error converting SVG to PNG: {e}")
-        return False
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    previous_downloads = glob(f"{output_dir}/*.jpg")
+
+    for index, image in enumerate(images):
+        index += len(previous_downloads)
+        image_url = image['largeImageURL']
+        image_id = f"image_{index + 1}"
+        
+        image_path = f"{output_dir}/{image_id}.jpg"
+        json_path = f"{output_dir}/{image_id}.json"
+        
+        # Download image
+        img_data = requests.get(image_url).content
+        with open(image_path, 'wb') as handler:
+            handler.write(img_data)
+        
+        # Prepare metadata
+        metadata = {
+            'Image_URL': image_url, **image,
+        }
+        
+        # Save metadata as JSON
+        with open(json_path, 'w') as json_file:
+            json.dump(metadata, json_file, indent=4)
+
+# Function to download images from Unsplash
+def download_unsplash_images(query, n_images, output_dir, api_key=None):
+    if api_key is None:
+        api_key = os.getenv('UNSPLASH_ACCESS_KEY')
+    if api_key is None:
+        raise ValueError("UNSPLASH_ACCESS_KEY is not set in the environment variables.",
+                         "Set it in the .env file or pass it as an argument.")
+        
+    url = f"https://api.unsplash.com/search/photos?query={query}&per_page={n_images}&client_id={api_key}"
+    response = requests.get(url).json()
+    images = response['results']
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    previous_downloads = glob(f"{output_dir}/*.jpg")
+
+    for index, image in enumerate(images):
+        index += len(previous_downloads)
+        image_url = image['urls']['full']
+        image_id = f"image_{index + 1}"
+        
+        image_path = f"{output_dir}/{image_id}.jpg"
+        json_path = f"{output_dir}/{image_id}.json"
+        
+        # Download image
+        img_data = requests.get(image_url).content
+        with open(image_path, 'wb') as handler:
+            handler.write(img_data)
+        
+        # Prepare metadata
+        metadata = {
+            'Image_Path': image_path,
+            'Image_URL': image_url,
+            'User': image['user']['name'],
+            'User_Profile': image['user']['links']['html'],
+            'Page_URL': image['links']['html'],
+            'Description': image.get('description', ''),
+            'Alt_Description': image.get('alt_description', ''),
+            'Tags': [tag['title'] for tag in image['tags']],
+            'Image_Width': image['width'],
+            'Image_Height': image['height'],
+            'Likes': image['likes'],
+            'Downloads': image.get('downloads', 'N/A')  # Note: downloads data may not always be present
+        }
+        
+        # Save metadata as JSON
+        with open(json_path, 'w') as json_file:
+            json.dump(metadata, json_file, indent=4)
+            
+# Source Image Extraction Functions ----------------------------------------
 
 def extract_images_from_pdf(pdf_path, output_dir, min_width=100, min_height=100, name_prefix="figure"):
     """
@@ -274,7 +344,7 @@ def extract_images_from_url(url, output_dir, min_width=100, min_height=100, name
                     filename = f"{name_prefix}{str(image_count).zfill(3)}.png"
                     filepath = output_dir / filename
                     
-                    if convert_svg_to_png(img_response.content, filepath, scale=svg_scale):
+                    if convert_svg(img_response.content, filepath, scale=svg_scale):
                         saved_images.append(filepath)
                         print(f"  Saved (converted to PNG at {svg_scale}x scale): {filename}")
                     else:

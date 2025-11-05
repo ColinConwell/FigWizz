@@ -28,14 +28,21 @@ dependencies = [
     "pybtex>=0.24.0",
     "cairosvg>=2.7.0",
     "PyMuPDF>=1.22.5",
+    "matplotlib>=3.7.0",
     "tqdm>=4.62.0"
 ]
 
 [project.optional-dependencies]
+genai = [
+    "litellm>=1.55.0",
+]
 dev = [
     "pytest>=7.0.0",
     "isort>=5.0.0",
     "black>=23.0.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
 ]
 
 [tool.setuptools.packages.find]

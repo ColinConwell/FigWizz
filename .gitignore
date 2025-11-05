@@ -1,11 +1,22 @@
 # Project
+.github
 xyzopt
+reference
+mkdocs.yml
+
+# Env vars
+.env.local
+!.env.example
 
 # IDE Cache
 .vscode/
 .cursor/
 .cursorignore
 .jupyter/
+
+# Python
+__pycache__/
+*.pyc
 
 # Packaging
 dist/
