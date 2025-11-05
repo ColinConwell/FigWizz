@@ -56,7 +56,6 @@ def test_make_hexicon_bytes_input(sample_image_bytes):
     assert isinstance(result, Image.Image)
 
 
-@pytest.mark.requires_numpy
 def test_make_hexicon_numpy_input(sample_numpy_array):
     """Test creating hexicon from numpy array."""
     result = make_hexicon(sample_numpy_array)

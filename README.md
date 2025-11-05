@@ -29,9 +29,6 @@ pip install figwizz[pdf]
 # For SVG support
 pip install figwizz[svg]
 
-# For numpy array support
-pip install figwizz[numpy]
-
 # For development
 pip install figwizz[dev]
 
@@ -39,7 +36,7 @@ pip install figwizz[dev]
 pip install figwizz[docs]
 
 # Install all optional dependencies
-pip install figwizz[genai,pdf,svg,numpy]
+pip install figwizz[genai,pdf,svg]
 ```
 
 ## Quick Start

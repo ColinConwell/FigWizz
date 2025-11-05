@@ -8,6 +8,7 @@ import tempfile
 from io import BytesIO
 from pathlib import Path
 from PIL import Image
+import numpy as np
 
 __all__ = [
     'normalize_image_input',
@@ -246,47 +247,31 @@ def _load_image_from_url(url):
 
 def _is_numpy_array(obj):
     """Check if object is a numpy array."""
-    try:
-        import numpy as np
-        return isinstance(obj, np.ndarray)
-    except ImportError:
-        return False
+    return isinstance(obj, np.ndarray)
 
 
 def _numpy_to_pil(arr):
     """Convert numpy array to PIL Image."""
-    try:
-        import numpy as np
-        
-        # Handle different array shapes
-        if arr.ndim == 2:
-            # Grayscale
-            return Image.fromarray(arr.astype(np.uint8), mode='L')
-        elif arr.ndim == 3:
-            if arr.shape[2] == 3:
-                # RGB
-                return Image.fromarray(arr.astype(np.uint8), mode='RGB')
-            elif arr.shape[2] == 4:
-                # RGBA
-                return Image.fromarray(arr.astype(np.uint8), mode='RGBA')
-            else:
-                raise ValueError(f"Unsupported array shape: {arr.shape}")
+    # Handle different array shapes
+    if arr.ndim == 2:
+        # Grayscale
+        return Image.fromarray(arr.astype(np.uint8), mode='L')
+    elif arr.ndim == 3:
+        if arr.shape[2] == 3:
+            # RGB
+            return Image.fromarray(arr.astype(np.uint8), mode='RGB')
+        elif arr.shape[2] == 4:
+            # RGBA
+            return Image.fromarray(arr.astype(np.uint8), mode='RGBA')
         else:
-            raise ValueError(f"Unsupported array dimensions: {arr.ndim}")
-    except ImportError:
-        raise RuntimeError("numpy is required to handle numpy arrays")
+            raise ValueError(f"Unsupported array shape: {arr.shape}")
+    else:
+        raise ValueError(f"Unsupported array dimensions: {arr.ndim}")
 
 
 def _pil_to_numpy(image):
     """Convert PIL Image to numpy array."""
-    try:
-        import numpy as np
-        return np.array(image)
-    except ImportError:
-        raise RuntimeError(
-            "numpy is required for numpy output format. "
-            "Install it with: pip install numpy"
-        )
+    return np.array(image)
 
 
 def _pil_to_bytes(image, format='PNG'):

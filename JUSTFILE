@@ -14,7 +14,7 @@ install:
 
 # Install with all optional dependencies
 install-all:
-    pip install -e ".[genai,pdf,svg,numpy,dev,docs]"
+    pip install -e ".[genai,pdf,svg,dev,docs]"
 
 # Install development dependencies only
 install-dev:

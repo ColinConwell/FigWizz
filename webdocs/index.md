@@ -79,6 +79,7 @@ slides_to_images('presentation.pptx', 'figures/', crop_images=True)
 ## Requirements
 
 - Python >= 3.7
+- numpy
 - PIL/Pillow
 - matplotlib
 - requests
@@ -88,4 +89,3 @@ Optional dependencies:
 - PyMuPDF (for PDF extraction)
 - cairosvg (for SVG conversion)
 - litellm (for AI image generation)
-- numpy (for numpy array support)

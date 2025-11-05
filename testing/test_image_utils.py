@@ -46,7 +46,6 @@ def test_normalize_image_input_base64(sample_rgb_image):
     assert isinstance(result, Image.Image)
 
 
-@pytest.mark.requires_numpy
 def test_normalize_image_input_numpy(sample_numpy_array):
     """Test normalizing numpy array input."""
     result = normalize_image_input(sample_numpy_array)
@@ -84,7 +83,6 @@ def test_normalize_image_output_bytes(sample_rgb_image):
     assert isinstance(result, bytes)
 
 
-@pytest.mark.requires_numpy
 def test_normalize_image_output_numpy(sample_rgb_image):
     """Test converting to numpy format."""
     import numpy as np

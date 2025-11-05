@@ -149,9 +149,6 @@ def sample_pdf_path(temp_dir, multiple_test_images):
         "markers", "requires_litellm: mark test as requiring litellm"
     )
     config.addinivalue_line(
-        "markers", "requires_numpy: mark test as requiring numpy"
-    )
-    config.addinivalue_line(
         "markers", "requires_cairosvg: mark test as requiring cairosvg"
     )
     config.addinivalue_line(

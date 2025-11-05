@@ -22,6 +22,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "numpy>=1.21.0",
     "ipython>=8.0.1",
     "pillow>=9.0.0",
     "python-pptx>=0.6.21",
@@ -41,9 +42,6 @@ pdf = [
 ]
 svg = [
     "cairosvg>=2.7.0",
-]
-numpy = [
-    "numpy>=1.21.0",
 ]
 dev = [
     "pytest>=7.0.0",
@@ -73,7 +71,6 @@ addopts = "-v --strict-markers --tb=short"
 markers = [
     "requires_pymupdf: mark test as requiring PyMuPDF",
     "requires_litellm: mark test as requiring litellm",
-    "requires_numpy: mark test as requiring numpy",
     "requires_cairosvg: mark test as requiring cairosvg",
     "requires_network: mark test as requiring network access",
 ]
