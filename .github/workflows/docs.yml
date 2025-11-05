@@ -1,0 +1,47 @@
+name: Docs to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package + docs requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[docs]"
+
+      - name: Build site
+        run: mkdocs build --clean
+
+      - name: Preview built site (act only)
+        if: ${{ env.ACT == 'true' }}
+        run: |
+          echo "Built files in ./site:" && find site -maxdepth 2 -type f | head -n 50 || true
+
+      - name: Deploy to gh-pages (GitHub only)
+        if: ${{ env.ACT != 'true' }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          force_orphan: true
