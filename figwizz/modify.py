@@ -56,9 +56,10 @@ def make_image_opaque(img_input, bg_color=(255, 255, 255)):
 
 
 def ngon_crop(img_input, sides=6, crop_size=None, shift_x=0, shift_y=0,
-              rotation=0, border_size=0, border_color="auto", padding=0):
+              rotation=0, border_size=0, border_color="auto", padding=0, 
+              background_color=None):
     """
-    Crop an image to an n-sided polygon (n-gon), with optional border.
+    Crop an image to an n-sided polygon (n-gon), with optional border and background.
     
     Useful for creating tidyverse-style hexicons and other polygonal image crops.
     
@@ -78,9 +79,11 @@ def ngon_crop(img_input, sides=6, crop_size=None, shift_x=0, shift_y=0,
             - Color name: e.g., "red", "blue"
         padding: Padding in pixels around the image content before cropping (default: 0).
                  This allows the n-gon to reshape without cutting into the image.
+        background_color: Background color inside the polygon (default: None for transparent).
+            Can be hex code, RGB tuple, or color name. Area outside polygon remains transparent.
     
     Returns:
-        PIL Image object with transparent background and polygon crop applied.
+        PIL Image object with transparent background outside polygon and polygon crop applied.
     
     Examples:
         ```python
@@ -92,6 +95,12 @@ def ngon_crop(img_input, sides=6, crop_size=None, shift_x=0, shift_y=0,
         
         # Create a pentagon with no border
         img = ngon_crop("input.png", sides=5)
+        
+        # Create a hexagon with white background inside
+        img = ngon_crop("input.png", sides=6, background_color="white")
+        
+        # Create a hexagon with custom background color
+        img = ngon_crop("input.png", sides=6, background_color="#F0F0F0")
         ```
     """
     # Normalize input to PIL Image
@@ -148,6 +157,13 @@ def ngon_crop(img_input, sides=6, crop_size=None, shift_x=0, shift_y=0,
     draw = ImageDraw.Draw(mask)
     # Fill polygon area with white (visible), background stays black (transparent)
     draw.polygon(vertices, fill=255)
+    
+    # Add background color inside polygon if requested
+    if background_color is not None:
+        bg_rgb = parse_color(background_color)
+        background_layer = Image.new('RGBA', output_size, bg_rgb + (255,))
+        background_layer.putalpha(mask)
+        result.paste(background_layer, (0, 0), background_layer)
     
     # Paste the image centered on the result, preserving its alpha
     img_x = (width - img.width) // 2

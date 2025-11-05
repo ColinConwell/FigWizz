@@ -101,6 +101,29 @@ hexicon = make_hexicon('logo.png', size=(400, 400))
 hexicon = make_hexicon('logo.png', size=(800, 800))
 ```
 
+## Background Color
+
+Add a background color inside the hexagon while keeping the outside transparent:
+
+```python
+# White background inside hexagon
+hexicon = make_hexicon('logo.png', background_color='white')
+
+# Custom background color (hex)
+hexicon = make_hexicon('logo.png', background_color='#F0F0F0')
+
+# Custom background color (RGB)
+hexicon = make_hexicon('logo.png', background_color=(240, 240, 240))
+
+# Combine with border
+hexicon = make_hexicon(
+    'logo.png',
+    background_color='white',
+    border_size=10,
+    border_color='black'
+)
+```
+
 ## Complete Professional Hexicon
 
 All options combined:
@@ -114,6 +137,7 @@ hexicon = make_hexicon(
     shift_x=0,
     shift_y=-15,  # Slightly up
     rotation=0,   # Flat top
+    background_color='white',  # White background inside hexagon
     border_size=15,
     border_color='auto',
     padding=40

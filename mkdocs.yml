@@ -7,10 +7,20 @@ docs_dir: webdocs
 
 theme:
   name: material
+  logo: assets/figwizz-hexicon.png
   palette:
     - scheme: default
-      primary: indigo
-      accent: indigo
+      primary: deep purple
+      accent: pink
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: pink
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
     - navigation.sections
     - navigation.tracking

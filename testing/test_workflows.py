@@ -62,3 +62,18 @@ def test_make_hexicon_numpy_input(sample_numpy_array):
     result = make_hexicon(sample_numpy_array)
     assert isinstance(result, Image.Image)
 
+
+def test_make_hexicon_with_background_color(sample_rgb_image):
+    """Test creating hexicon with background color."""
+    result = make_hexicon(sample_rgb_image, background_color="white")
+    assert isinstance(result, Image.Image)
+    assert result.mode == 'RGBA'
+
+
+def test_make_hexicon_with_background_and_border(sample_rgb_image):
+    """Test creating hexicon with background color and border."""
+    result = make_hexicon(sample_rgb_image, background_color="#F0F0F0",
+                         border_size=10, border_color="black")
+    assert isinstance(result, Image.Image)
+    assert result.mode == 'RGBA'
+

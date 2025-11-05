@@ -89,7 +89,3 @@ Optional dependencies:
 - cairosvg (for SVG conversion)
 - litellm (for AI image generation)
 - numpy (for numpy array support)
-
-## License
-
-GPL-3.0-only

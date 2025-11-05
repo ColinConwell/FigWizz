@@ -28,6 +28,8 @@ def make_hexicon(input_image, size=None, **kwargs):
                 - Hex code: e.g., "#FF5733"
                 - RGB tuple: e.g., (255, 87, 51)
                 - Color name: e.g., "red", "blue"
+            background_color: Background color inside the hexagon (default: None for transparent).
+                Can be hex code, RGB tuple, or color name. Area outside hexagon remains transparent.
     Returns:
         PIL Image object with the hexicon applied.
         
@@ -41,6 +43,9 @@ def make_hexicon(input_image, size=None, **kwargs):
         
         # Make hexicon with slight upwards shift
         img = make_hexicon("input.png", shift_y=10)
+        
+        # Make hexicon with white background inside
+        img = make_hexicon("input.png", background_color="white")
         ```
     """
     # Normalize input to PIL Image

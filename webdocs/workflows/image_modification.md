@@ -92,6 +92,27 @@ Specify output dimensions:
 img = ngon_crop('image.png', crop_size=(300, 300))
 ```
 
+### Background Color
+
+Add a background color inside the polygon while keeping the outside transparent:
+
+```python
+# White background inside hexagon
+img = ngon_crop('image.png', background_color='white')
+
+# Custom background color (hex)
+img = ngon_crop('image.png', background_color='#F0F0F0')
+
+# Custom background color (RGB)
+img = ngon_crop('image.png', background_color=(240, 240, 240))
+
+# Combine with border
+img = ngon_crop('image.png', 
+                background_color='white',
+                border_size=10,
+                border_color='black')
+```
+
 ## Complete Example
 
 Create a professional hexicon with all options:
@@ -106,6 +127,7 @@ hexicon = ngon_crop(
     shift_x=0,
     shift_y=-10,  # Shift up slightly
     rotation=0,
+    background_color='white',  # White background inside hexagon
     border_size=12,
     border_color='auto',  # Contrasting color
     padding=30  # Space around content

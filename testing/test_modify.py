@@ -89,3 +89,32 @@ def test_ngon_crop_from_path(sample_image_path):
     result = ngon_crop(sample_image_path)
     assert isinstance(result, Image.Image)
 
+
+def test_ngon_crop_with_background_color(sample_rgb_image):
+    """Test n-gon crop with background color."""
+    result = ngon_crop(sample_rgb_image, background_color="white")
+    assert isinstance(result, Image.Image)
+    assert result.mode == 'RGBA'
+
+
+def test_ngon_crop_with_background_color_hex(sample_rgb_image):
+    """Test n-gon crop with background color as hex."""
+    result = ngon_crop(sample_rgb_image, background_color="#F0F0F0")
+    assert isinstance(result, Image.Image)
+    assert result.mode == 'RGBA'
+
+
+def test_ngon_crop_with_background_color_rgb(sample_rgb_image):
+    """Test n-gon crop with background color as RGB tuple."""
+    result = ngon_crop(sample_rgb_image, background_color=(255, 255, 255))
+    assert isinstance(result, Image.Image)
+    assert result.mode == 'RGBA'
+
+
+def test_ngon_crop_with_background_and_border(sample_rgb_image):
+    """Test n-gon crop with both background color and border."""
+    result = ngon_crop(sample_rgb_image, background_color="white", 
+                      border_size=5, border_color="black")
+    assert isinstance(result, Image.Image)
+    assert result.mode == 'RGBA'
+
