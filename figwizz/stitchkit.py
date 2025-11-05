@@ -10,8 +10,10 @@ Platform Support:
     - Linux: Uses LibreOffice command-line tools
 
 Example:
-    >>> from figwizz.stitchkit import slides_to_images
-    >>> slides_to_images('presentation.pptx', 'output_folder', crop_images=True)
+    ```python
+    from figwizz.stitchkit import slides_to_images
+    slides_to_images('presentation.pptx', 'output_folder', crop_images=True)
+    ```
 """
 
 import os, re

@@ -2,9 +2,18 @@
 
 Python toolkit for programmatic figure design.
 
+- Easily convert images to different formats
+- Stitch keynote / powerpoint slides into auto-cropped images
+- Stitch multiple figures to a single PDF
+- Scrape images from publication PDFs / websites
+- Download stock images from Unsplash / Pixabay
+- Batch-generate images from prompts in a single line
+- Make image grids, decks, and icons (e.g. hexicons)
+
 ## Installation
 
-Basic installation:
+Basic installation from PyPI:
+
 ```bash
 pip install figwizz
 ```
@@ -93,7 +102,7 @@ from figwizz import generate_images
 # Generate images from prompts
 generate_images(
     prompts=["a serene mountain lake", "abstract geometric art"],
-    model="dall-e-3",
+    model="gpt-image-1",
     output_dir="generated/"
 )
 ```
@@ -157,7 +166,3 @@ PIXABAY_API_KEY=your_pixabay_key
 # For AI image generation
 OPENAI_API_KEY=your_openai_key
 ```
-
-## License
-
-GPL-3.0-only

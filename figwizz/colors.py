@@ -18,12 +18,16 @@ def parse_color(color_input):
         RGB tuple (R, G, B)
     
     Examples:
-        >>> parse_color('#FF5733')
-        (255, 87, 51)
-        >>> parse_color((255, 87, 51))
-        (255, 87, 51)
-        >>> parse_color('red')
-        (255, 0, 0)
+        ```python
+        parse_color('#FF5733')
+        # Returns: (255, 87, 51)
+        
+        parse_color((255, 87, 51))
+        # Returns: (255, 87, 51)
+        
+        parse_color('red')
+        # Returns: (255, 0, 0)
+        ```
     """
     if isinstance(color_input, str):
         # Try to parse as hex or named color

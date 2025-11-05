@@ -61,9 +61,11 @@ def normalize_image_input(image_input, return_type='pil'):
         RuntimeError: If URL fetch fails
     
     Examples:
-        >>> img = normalize_image_input('/path/to/image.png')
-        >>> img = normalize_image_input(bytes_data)
-        >>> arr = normalize_image_input(img, return_type='numpy')
+        ```python
+        img = normalize_image_input('/path/to/image.png')
+        img = normalize_image_input(bytes_data)
+        arr = normalize_image_input(img, return_type='numpy')
+        ```
     """
     pil_image = None
     
@@ -148,8 +150,10 @@ def save_image(image, output_path, format=None, make_opaque=None, **kwargs):
         Path to saved image
     
     Examples:
-        >>> save_image(img, 'output.png')
-        >>> save_image(img, 'output.jpg', quality=95)
+        ```python
+        save_image(img, 'output.png')
+        save_image(img, 'output.jpg', quality=95)
+        ```
     """
     # Normalize input to PIL Image
     pil_image = normalize_image_input(image, return_type='pil')

@@ -5,10 +5,12 @@ This module provides functions for displaying images in matplotlib-based
 grid layouts with customizable configurations.
 
 Example:
-    >>> from figwizz.display import make_image_grid
-    >>> images = ['img1.png', 'img2.png', 'img3.png']
-    >>> fig, axes = make_image_grid(images, titles=['A', 'B', 'C'])
-    >>> plt.show()
+    ```python
+    from figwizz.display import make_image_grid
+    images = ['img1.png', 'img2.png', 'img3.png']
+    fig, axes = make_image_grid(images, titles=['A', 'B', 'C'])
+    plt.show()
+    ```
 """
 
 import matplotlib.pyplot as plt

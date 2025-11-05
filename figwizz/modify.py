@@ -5,11 +5,15 @@ This module provides functions for modifying images, including adding
 opaque backgrounds and cropping to n-sided polygon shapes (hexagons, etc.).
 
 Example:
-    >>> from figwizz.modify import ngon_crop, make_image_opaque
-    >>> # Create hexagon-shaped crop
-    >>> hexagon = ngon_crop('image.png', sides=6, border_size=5)
-    >>> # Make RGBA image opaque
-    >>> opaque_img = make_image_opaque(rgba_image)
+    ```python
+    from figwizz.modify import ngon_crop, make_image_opaque
+    
+    # Create hexagon-shaped crop
+    hexagon = ngon_crop('image.png', sides=6, border_size=5)
+    
+    # Make RGBA image opaque
+    opaque_img = make_image_opaque(rgba_image)
+    ```
 """
 
 from copy import copy
@@ -79,14 +83,16 @@ def ngon_crop(img_input, sides=6, crop_size=None, shift_x=0, shift_y=0,
         PIL Image object with transparent background and polygon crop applied.
     
     Examples:
-        >>> # Create a hexagon with auto border
-        >>> img = ngon_crop("input.png", sides=6, border_size=5, border_color="auto")
+        ```python
+        # Create a hexagon with auto border
+        img = ngon_crop("input.png", sides=6, border_size=5, border_color="auto")
         
-        >>> # Create an octagon with red border and padding
-        >>> img = ngon_crop("input.png", sides=8, border_size=3, border_color="red", padding=20)
+        # Create an octagon with red border and padding
+        img = ngon_crop("input.png", sides=8, border_size=3, border_color="red", padding=20)
         
-        >>> # Create a pentagon with no border
-        >>> img = ngon_crop("input.png", sides=5)
+        # Create a pentagon with no border
+        img = ngon_crop("input.png", sides=5)
+        ```
     """
     # Normalize input to PIL Image
     img = normalize_image_input(img_input)

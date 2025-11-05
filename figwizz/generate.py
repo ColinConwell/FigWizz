@@ -5,9 +5,11 @@ This module provides functions for generating images using AI models
 through the litellm library. Requires optional dependency: litellm.
 
 Example:
-    >>> from figwizz.generate import generate_images
-    >>> prompts = ["a red apple", "a blue ocean"]
-    >>> images = generate_images(prompts, output_dir="generated")
+    ```python
+    from figwizz.generate import generate_images
+    prompts = ["a red apple", "a blue ocean"]
+    images = generate_images(prompts, output_dir="generated")
+    ```
 """
 
 import os, base64

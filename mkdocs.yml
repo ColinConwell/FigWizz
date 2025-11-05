@@ -20,7 +20,7 @@ theme:
     - content.code.annotate
 
 nav:
-  - Home: index.md
+  - Welcome: index.md
   - Getting Started:
       - Installation: installation.md
       - Quick Start: quickstart.md

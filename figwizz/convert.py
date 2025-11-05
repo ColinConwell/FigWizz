@@ -6,9 +6,11 @@ handling various input types (paths, bytes, PIL Images, etc.), and processing
 SVG files.
 
 Example:
-    >>> from figwizz.convert import convert_image
-    >>> convert_image('input.png', 'jpg')
-    'input.jpg'
+    ```python
+    from figwizz.convert import convert_image
+    convert_image('input.png', 'jpg')
+    # Returns: 'input.jpg'
+    ```
 """
 
 import os, base64

@@ -32,14 +32,16 @@ def make_hexicon(input_image, size=None, **kwargs):
         PIL Image object with the hexicon applied.
         
     Examples:
-        >>> # Make a hexicon with no border
-        >>> img = make_hexicon("input.png")
+        ```python
+        # Make a hexicon with no border
+        img = make_hexicon("input.png")
         
-        >>> # Make a hexicon with red border and padding
-        >>> img = make_hexicon("input.png", border_size=3, border_color="red", padding=20)
+        # Make a hexicon with red border and padding
+        img = make_hexicon("input.png", border_size=3, border_color="red", padding=20)
         
-        >>> # Make hexicon with slight upwards shift
-        >>> img = make_hexicon("input.png", shift_y=10)
+        # Make hexicon with slight upwards shift
+        img = make_hexicon("input.png", shift_y=10)
+        ```
     """
     # Normalize input to PIL Image
     image = normalize_image_input(input_image)
