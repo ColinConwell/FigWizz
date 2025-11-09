@@ -1,5 +1,7 @@
 # __name__ = "figwizz"
 
+import os
+
 from . import modify
 from . import convert
 from . import scrape
@@ -41,6 +43,16 @@ from .workflows import (
     make_hexicon,
 )
 
+from .utils.environ import (
+    auto_load_env,
+    check_capabilities,
+)
+
+# Automatically load environment variables on import
+# Check FIGWIZZ_VERBOSE env var to control verbosity
+_verbose = os.getenv('FIGWIZZ_VERBOSE', '').lower() in ('1', 'true', 'yes')
+_capabilities = auto_load_env(verbose=_verbose, silent_on_missing=True)
+
 __all__ = [
     # submodules
     "modify",
@@ -74,6 +86,10 @@ __all__ = [
     
     # figwizz workflows
     "make_hexicon",
+    
+    # environment utilities
+    "auto_load_env",
+    "check_capabilities",
 ]
 
 def package_info():
