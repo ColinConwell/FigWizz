@@ -21,6 +21,10 @@ from .display import (
     make_image_grid,
 )
 
+from .generate import (
+    generate_images,
+)
+
 from .stitchkit import (
     slides_to_images,
     convert_to_pdf,
@@ -67,6 +71,9 @@ __all__ = [
     
     # image modification
     "make_image_opaque",
+    
+    # image generation
+    "generate_images",
     
     # image stitching
     "make_image_grid",

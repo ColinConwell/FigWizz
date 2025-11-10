@@ -12,13 +12,15 @@ Example:
     ```
 """
 
-import os, base64
+import os, re,  base64
+from copy import copy
 from PIL import Image
 from tqdm.auto import tqdm
 
 from .utils import check_optional_import
 
-def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', api_key=None, return_images=True):
+def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', 
+                    api_key=None, return_images=True):
     """
     Generate images from prompts using generative AI.
     
@@ -54,6 +56,26 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', api_ke
     image_paths = [] # list to store the paths to the generated images
         
     for prompt in tqdm(prompts, desc="Processing Prompts"):
+        prompt_for_filepath = copy(prompt).lower()
+        
+        # remove common english articles
+        prompt_for_filepath = re.sub(r'\b(a|an|the)\b', '', prompt_for_filepath)
+        
+        # Remove all non-alphanumeric characters
+        prompt_for_filepath = re.sub(r'[^a-z0-9\s]', '', prompt_for_filepath)
+        
+        # Replace whitespace with a single dash
+        prompt_for_filepath = re.sub(r'\s+', '-', prompt_for_filepath)
+        
+        # Replace double dashes with single dash
+        prompt_for_filepath = re.sub(r'--', '-', prompt_for_filepath)
+        
+        # Remove leading/trailing dashes
+        prompt_for_filepath = prompt_for_filepath.strip('-')
+        
+        output_subdir = os.path.join(output_dir, prompt_for_filepath)
+        os.makedirs(output_subdir, exist_ok=True)
+        
         for image_index in tqdm(range(n_images), desc="Generating Images"):
             try: # to generate and parse the image
                 response = image_generation(
@@ -61,20 +83,23 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', api_ke
                     size='1024x1024', 
                     model=model,
                     api_key=api_key,
-                    response_format='b64_json',
                 )
                 
                 image_data = response['data'][0]['b64_json']
-                image_path = os.path.join(output_dir, f"image_{image_index + 1}.png")
+                image_path = os.path.join(output_subdir, f"image_{image_index + 1}.png")
+                
+                if os.path.exists(image_path):
+                    last_index = int(image_path.split('_')[-1].split('.')[0])
+                    image_path = os.path.join(output_subdir, f"image_{last_index + 1}.png")
                 
                 with open(image_path, "wb") as filepath:
                     filepath.write(base64.b64decode(image_data))
                 
                 image_paths.append(image_path)
                     
-            except Exception as e:
+            except Exception as error:
                 print(f"Error generating image for prompt: {prompt}")
-                print(f"   Error: {e}")
+                print(f"   Error: {error}")
                 continue
             
     if return_images:
