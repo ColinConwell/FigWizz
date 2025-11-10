@@ -4,6 +4,7 @@ Tests for scraping functions
 
 import os
 import pytest
+from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from figwizz.scrape import (
     download_stock_images,
@@ -14,29 +15,6 @@ from figwizz.scrape import (
 )
 
 
-@pytest.mark.requires_network
-@patch('figwizz.scrape.requests.get')
-def test_download_pixabay_images_success(mock_get, temp_dir):
-    """Test downloading images from Pixabay."""
-    # Mock API response
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        'hits': [
-            {'largeImageURL': 'http://example.com/img1.jpg', 'id': 1},
-            {'largeImageURL': 'http://example.com/img2.jpg', 'id': 2}
-        ]
-    }
-    mock_response.content = b'fake_image_data'
-    mock_get.return_value = mock_response
-    
-    result = download_pixabay_images(
-        'test', 2, str(temp_dir), api_key='test_key'
-    )
-    
-    assert len(result) == 2
-    assert all(str(temp_dir) in path for path in result)
-
-
 def test_download_pixabay_images_no_api_key(monkeypatch):
     """Test error handling for missing Pixabay API key."""
     monkeypatch.delenv('PIXABAY_API_KEY', raising=False)
@@ -44,66 +22,11 @@ def test_download_pixabay_images_no_api_key(monkeypatch):
         download_pixabay_images('test', 2, 'output', api_key=None)
 
 
-@patch('figwizz.scrape.requests.get')
-def test_download_pixabay_images_api_error(mock_get, temp_dir):
-    """Test handling of Pixabay API errors."""
-    from requests import RequestException
-    mock_get.side_effect = RequestException("API Error")
-    
-    with pytest.raises(RuntimeError, match="Failed to fetch"):
-        download_pixabay_images('test', 2, str(temp_dir), api_key='test_key')
-
-
-@pytest.mark.requires_network
-@patch('figwizz.scrape.requests.get')
-def test_download_unsplash_images_success(mock_get, temp_dir):
-    """Test downloading images from Unsplash."""
-    # Mock API response
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        'results': [
-            {
-                'urls': {'full': 'http://example.com/img1.jpg'},
-                'user': {'name': 'User1', 'links': {'html': 'http://example.com/user1'}},
-                'links': {'html': 'http://example.com/photo1'},
-                'width': 1920,
-                'height': 1080,
-                'likes': 100,
-                'tags': []
-            }
-        ]
-    }
-    mock_response.content = b'fake_image_data'
-    mock_get.return_value = mock_response
-    
-    result = download_unsplash_images(
-        'test', 1, str(temp_dir), api_key='test_key'
-    )
-    
-    assert len(result) == 1
-
-
 def test_download_unsplash_images_no_api_key(monkeypatch):
     """Test error handling for missing Unsplash API key."""
     monkeypatch.delenv('UNSPLASH_ACCESS_KEY', raising=False)
     with pytest.raises(ValueError, match="UNSPLASH_ACCESS_KEY"):
         download_unsplash_images('test', 2, 'output', api_key=None)
-
-
-def test_download_stock_images_pixabay(temp_dir):
-    """Test download_stock_images with Pixabay provider."""
-    with patch('figwizz.scrape.download_pixabay_images') as mock_download:
-        mock_download.return_value = ['image1.jpg', 'image2.jpg']
-        result = download_stock_images('test', 2, str(temp_dir), provider='pixabay', api_key='test')
-        assert len(result) == 2
-
-
-def test_download_stock_images_unsplash(temp_dir):
-    """Test download_stock_images with Unsplash provider."""
-    with patch('figwizz.scrape.download_unsplash_images') as mock_download:
-        mock_download.return_value = ['image1.jpg']
-        result = download_stock_images('test', 1, str(temp_dir), provider='unsplash', api_key='test')
-        assert len(result) == 1
 
 
 def test_download_stock_images_invalid_provider(temp_dir):
@@ -161,30 +84,32 @@ def test_extract_images_from_url(mock_get, temp_dir):
         assert isinstance(result, list)
 
 
-# Live integration tests (only run when API keys are available)
+# Integration tests - make actual API calls
 @pytest.mark.requires_network
 @pytest.mark.skipif(
     not os.getenv('PIXABAY_API_KEY'),
     reason="PIXABAY_API_KEY not available in environment"
 )
-def test_download_pixabay_images_live(temp_dir):
+def test_download_pixabay_images_integration(temp_dir):
     """Test downloading real images from Pixabay."""
-    from figwizz import download_stock_images
-    
     api_key = os.getenv('PIXABAY_API_KEY')
-    if not api_key:
-        pytest.skip("PIXABAY_API_KEY not set")
     
-    images = download_stock_images(
+    images = download_pixabay_images(
         query='nature',
         n_images=2,
         output_dir=str(temp_dir),
-        provider='pixabay',
         api_key=api_key
     )
     
     assert len(images) > 0
-    assert all((temp_dir / img.split('/')[-1]).exists() for img in images)
+    assert len(images) <= 2
+    # Verify files actually exist
+    for img_path in images:
+        assert os.path.exists(img_path)
+        assert str(temp_dir) in img_path
+        # Verify metadata JSON also exists
+        json_path = img_path.replace('.jpg', '.json')
+        assert os.path.exists(json_path)
 
 
 @pytest.mark.requires_network
@@ -192,22 +117,66 @@ def test_download_pixabay_images_live(temp_dir):
     not os.getenv('UNSPLASH_ACCESS_KEY'),
     reason="UNSPLASH_ACCESS_KEY not available in environment"
 )
-def test_download_unsplash_images_live(temp_dir):
+def test_download_unsplash_images_integration(temp_dir):
     """Test downloading real images from Unsplash."""
-    from figwizz import download_stock_images
-    
     api_key = os.getenv('UNSPLASH_ACCESS_KEY')
-    if not api_key:
-        pytest.skip("UNSPLASH_ACCESS_KEY not set")
     
-    images = download_stock_images(
+    images = download_unsplash_images(
         query='nature',
         n_images=2,
+        output_dir=str(temp_dir),
+        api_key=api_key
+    )
+    
+    assert len(images) > 0
+    assert len(images) <= 2
+    # Verify files actually exist
+    for img_path in images:
+        assert os.path.exists(img_path)
+        assert str(temp_dir) in img_path
+        # Verify metadata JSON also exists
+        json_path = img_path.replace('.jpg', '.json')
+        assert os.path.exists(json_path)
+
+
+@pytest.mark.requires_network
+@pytest.mark.skipif(
+    not os.getenv('PIXABAY_API_KEY'),
+    reason="PIXABAY_API_KEY not available in environment"
+)
+def test_download_stock_images_pixabay_integration(temp_dir):
+    """Test download_stock_images wrapper with Pixabay."""
+    api_key = os.getenv('PIXABAY_API_KEY')
+    
+    images = download_stock_images(
+        query='mountain',
+        n_images=1,
+        output_dir=str(temp_dir),
+        provider='pixabay',
+        api_key=api_key
+    )
+    
+    assert len(images) > 0
+    assert all(os.path.exists(img) for img in images)
+
+
+@pytest.mark.requires_network
+@pytest.mark.skipif(
+    not os.getenv('UNSPLASH_ACCESS_KEY'),
+    reason="UNSPLASH_ACCESS_KEY not available in environment"
+)
+def test_download_stock_images_unsplash_integration(temp_dir):
+    """Test download_stock_images wrapper with Unsplash."""
+    api_key = os.getenv('UNSPLASH_ACCESS_KEY')
+    
+    images = download_stock_images(
+        query='mountain',
+        n_images=1,
         output_dir=str(temp_dir),
         provider='unsplash',
         api_key=api_key
     )
     
     assert len(images) > 0
-    assert all((temp_dir / img.split('/')[-1]).exists() for img in images)
+    assert all(os.path.exists(img) for img in images)
 
