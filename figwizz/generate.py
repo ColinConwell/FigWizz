@@ -47,6 +47,9 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', api_ke
     
     if not isinstance(prompts, list):
         prompts = [prompts]
+    
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
         
     image_paths = [] # list to store the paths to the generated images
         
@@ -58,6 +61,7 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', api_ke
                     size='1024x1024', 
                     model=model,
                     api_key=api_key,
+                    response_format='b64_json',
                 )
                 
                 image_data = response['data'][0]['b64_json']
@@ -65,6 +69,8 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', api_ke
                 
                 with open(image_path, "wb") as filepath:
                     filepath.write(base64.b64decode(image_data))
+                
+                image_paths.append(image_path)
                     
             except Exception as e:
                 print(f"Error generating image for prompt: {prompt}")
