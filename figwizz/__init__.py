@@ -1,3 +1,36 @@
+"""
+FigWizz: A Python toolkit for image manipulation, generation, and scraping.
+
+FigWizz provides a comprehensive suite of tools for working with images:
+- Image conversion between formats
+- Image modification (cropping, opacity, polygonal masks)
+- Generative AI image creation
+- Stock image downloading (Pixabay, Unsplash)
+- PDF and web scraping for images
+- Presentation slide conversion
+- Hexicon creation for package logos
+
+Quick Start:
+    ```python
+    import figwizz
+    
+    # Convert an image
+    figwizz.convert_image('input.png', 'jpg')
+    
+    # Create a hexicon
+    hexicon = figwizz.make_hexicon('logo.png', border_size=5)
+    hexicon.save('hexicon.png')
+    
+    # Download stock images
+    figwizz.download_stock_images('mountains', 5, 'output/')
+    
+    # Generate AI images (requires API key)
+    figwizz.generate_images(['a red apple', 'a blue ocean'], 'generated/')
+    ```
+
+For more information, see the documentation at: https://github.com/colinconwell/FigWizard
+"""
+
 # __name__ = "figwizz"
 
 import os

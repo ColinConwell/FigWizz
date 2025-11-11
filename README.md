@@ -21,22 +21,22 @@ pip install figwizz
 With optional dependencies:
 ```bash
 # For AI image generation
-pip install figwizz[genai]
+pip install 'figwizz[genai]'
 
 # For PDF processing
-pip install figwizz[pdf]
+pip install 'figwizz[pdf]'
 
 # For SVG support
-pip install figwizz[svg]
+pip install 'figwizz[svg]'
 
 # For development
-pip install figwizz[dev]
+pip install 'figwizz[dev]'
 
 # For documentation
-pip install figwizz[docs]
+pip install 'figwizz[docs]'
 
 # Install all optional dependencies
-pip install figwizz[genai,pdf,svg]
+pip install 'figwizz[genai,pdf,svg]'
 ```
 
 ## Quick Start

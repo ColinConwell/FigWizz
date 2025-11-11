@@ -1,5 +1,29 @@
 """
-Generative AI workflow functions
+Generative AI workflow functions.
+
+This module provides utilities for working with generative AI image models,
+including response parsing, serialization, and image extraction from various
+API response formats.
+
+Key features:
+- Extract images from AI model responses (base64 or URL)
+- Convert response objects to JSON-serializable dictionaries
+- Handle multiple AI provider response formats
+
+These functions are primarily used internally by the generate module but can
+be used directly for custom AI image generation workflows.
+
+Example:
+    ```python
+    from figwizz.workflows.genai import extract_image_from_genai_response
+    
+    # Extract image from API response
+    image_bytes, metadata = extract_image_from_genai_response(response)
+    
+    # Save to file
+    with open('output.png', 'wb') as f:
+        f.write(image_bytes)
+    ```
 """
 
 import requests
@@ -37,12 +61,34 @@ def convert_response_to_dict(response, keep_keys: list[str]=None):
     """
     Convert a generative AI response to a dictionary.
     
+    Recursively converts response objects (including nested objects) to
+    dictionaries, handling special types like bytes. Optionally filters
+    to keep only specified keys.
+    
     Args:
-        response: The response from a generative AI model.
-        keep_keys: The keys to keep in the dictionary.
+        response: The response from a generative AI model (can be a custom object,
+            dict, list, or primitive type)
+        keep_keys (list[str], optional): List of key names to retain in the output.
+            If None, all keys are kept. Defaults to None.
     
     Returns:
-        A dictionary of the response.
+        dict: A JSON-serializable dictionary representation of the response
+    
+    Examples:
+        ```python
+        from figwizz.workflows.genai import convert_response_to_dict
+        
+        # Convert full response
+        response_dict = convert_response_to_dict(api_response)
+        
+        # Keep only specific keys
+        filtered = convert_response_to_dict(api_response, keep_keys=['data', 'model'])
+        ```
+    
+    Note:
+        - Bytes objects are decoded to UTF-8 strings (with error handling)
+        - Objects with __dict__ are recursively converted
+        - Useful for serializing API responses to JSON
     """
     
     response_dict = _recursive_convert_to_dict(response)
@@ -57,14 +103,42 @@ def make_json_serializable(obj: Any) -> Any:
     Convert an object to a JSON-serializable format.
     
     Handles various non-serializable types including litellm response objects,
-    datetime objects, and custom classes with __dict__.
+    datetime objects, and custom classes with __dict__. This is a convenience
+    wrapper around convert_response_to_dict.
+    
+    Args:
+        obj (Any): Object to convert (can be any type)
+    
+    Returns:
+        Any: JSON-serializable representation of the object
+    
+    Examples:
+        ```python
+        from figwizz.workflows.genai import make_json_serializable
+        import json
+        
+        # Convert and save API response
+        response = api_call()
+        serializable = make_json_serializable(response)
+        with open('response.json', 'w') as f:
+            json.dump(serializable, f, indent=2)
+        ```
+    
+    Note:
+        - Particularly useful for saving API responses to JSON files
+        - Handles nested objects and complex data structures
+        - Bytes are decoded to strings with UTF-8
     """
     return convert_response_to_dict(obj)
 
 
 def extract_image_from_genai_response(response: Any) -> tuple[bytes, Dict[str, Any]]:
     """
-    Extract image data from various response formats.
+    Extract image data from various generative AI response formats.
+    
+    Intelligently handles multiple response structures from different AI providers,
+    automatically detecting and extracting image data from various formats including
+    base64 encoded strings and URLs.
     
     Supports multiple response structures:
     - response['data'][0] with 'b64_json' or 'url'
@@ -72,8 +146,49 @@ def extract_image_from_genai_response(response: Any) -> tuple[bytes, Dict[str, A
     - response with direct 'b64_json', 'url', or 'image' keys
     - response['choices'][0]['image'] (for some API formats)
     
+    Args:
+        response (Any): Response object from a generative AI API call. Can be a
+            dictionary, custom object, or any structure containing image data.
+    
     Returns:
-        tuple: (image_bytes, metadata_dict) where metadata contains info about the response
+        tuple[bytes, dict]: A tuple containing:
+            - bytes: Raw image data ready to be saved or processed
+            - dict: Metadata about the extraction including:
+                - 'extraction_method': Which method was used to extract the image
+                - 'original_format': Original format ('base64' or 'url')
+                - 'source_url': Original URL if image was downloaded (optional)
+    
+    Raises:
+        ValueError: If no supported image format is found in the response,
+            with detailed information about what keys were found
+    
+    Examples:
+        ```python
+        from figwizz.workflows.genai import extract_image_from_genai_response
+        from PIL import Image
+        from io import BytesIO
+        
+        # Extract from API response
+        image_bytes, metadata = extract_image_from_genai_response(api_response)
+        
+        # Save to file
+        with open('generated.png', 'wb') as f:
+            f.write(image_bytes)
+        
+        # Or open with PIL
+        image = Image.open(BytesIO(image_bytes))
+        image.show()
+        
+        # Check extraction metadata
+        print(f"Extracted via: {metadata['extraction_method']}")
+        print(f"Format was: {metadata['original_format']}")
+        ```
+    
+    Note:
+        - Automatically handles data URI schemes (data:image/...)
+        - Downloads images from URLs when necessary
+        - Provides detailed error messages when extraction fails
+        - Works with most major generative AI providers (OpenAI, etc.)
     """
     metadata = {'extraction_method': None, 'original_format': None}
     

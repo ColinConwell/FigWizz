@@ -27,14 +27,45 @@ __all__ = ['make_image_opaque', 'ngon_crop']
 
 def make_image_opaque(img_input, bg_color=(255, 255, 255)):
     """
-    Make an image opaque by adding a white background.
+    Make an image opaque by adding a solid background color.
+    
+    Converts images with transparency (RGBA, LA) to fully opaque images by
+    compositing them over a solid background color. Essential for formats that
+    don't support transparency like JPEG or PDF.
     
     Args:
-        img_input: Image in any supported format (path, PIL Image, bytes, numpy array, etc.).
-        bg_color: Background color (default: white).
+        img_input: Image in any supported format (path, PIL Image, bytes, numpy
+            array, URL, etc.). Will be normalized to PIL format automatically.
+        bg_color (tuple, optional): Background color as RGB tuple (R, G, B) where
+            each value is 0-255. Defaults to (255, 255, 255) for white.
     
     Returns:
-        PIL Image object with a white background.
+        PIL.Image.Image: PIL Image object in RGB mode with solid background
+    
+    Examples:
+        ```python
+        from figwizz import make_image_opaque
+        from PIL import Image
+        
+        # Make PNG with transparency opaque with white background
+        img = Image.open('transparent_logo.png')
+        opaque_img = make_image_opaque(img)
+        opaque_img.save('opaque_logo.jpg')  # Can save as JPEG now
+        
+        # Use custom background color (light gray)
+        opaque_img = make_image_opaque('logo.png', bg_color=(240, 240, 240))
+        
+        # Works with any input type
+        from PIL import Image
+        opaque_img = make_image_opaque('https://example.com/transparent.png')
+        ```
+    
+    Note:
+        - Preserves original image if it has no transparency
+        - Automatically converts to RGB mode for consistent output
+        - Alpha channel is used as mask for proper compositing
+        - Particularly useful before converting to JPEG or PDF
+        - Works with both RGBA (color + alpha) and LA (grayscale + alpha) modes
     """
     # Normalize input to PIL Image
     img = normalize_image_input(img_input)

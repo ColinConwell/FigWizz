@@ -1,5 +1,35 @@
 """
-Unified image input/output handling utilities
+Unified image input/output handling utilities.
+
+This module provides a comprehensive system for handling images in various
+input formats and converting between different representations. It eliminates
+the need to manually handle different image types throughout the codebase.
+
+Supported input formats:
+- File paths (local files)
+- URLs (http/https)
+- PIL Image objects
+- Bytes (raw image data)
+- NumPy arrays
+- File-like objects (BytesIO, etc.)
+- Base64 encoded strings
+
+The normalize_image_input function is used extensively throughout figwizz to
+provide a consistent interface for image operations.
+
+Example:
+    ```python
+    from figwizz.utils.images import normalize_image_input, save_image
+    
+    # All these work the same way
+    img1 = normalize_image_input('path/to/image.png')
+    img2 = normalize_image_input('https://example.com/image.jpg')
+    img3 = normalize_image_input(bytes_data)
+    img4 = normalize_image_input(numpy_array)
+    
+    # Save with automatic format handling
+    save_image(img1, 'output.jpg', quality=95)
+    ```
 """
 
 import os

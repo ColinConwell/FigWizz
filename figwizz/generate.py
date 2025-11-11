@@ -28,31 +28,120 @@ from .workflows.genai import (
 
 def extract_image_data(response: Any) -> tuple[bytes, Dict[str, Any]]:
     """
-    Extract image data from a response.
+    Extract image data from a generative AI response.
+    
+    This is a convenience wrapper around extract_image_from_genai_response.
+    It handles various response formats from different AI providers.
     
     Args:
-        response: The response from a generative AI model.
+        response (Any): The response object from a generative AI model (e.g., OpenAI,
+            Google, OpenRouter). Can be a dictionary or custom response object.
         
     Returns:
-        Tuple containing the image data and the extraction metadata.
+        tuple[bytes, dict]: A tuple containing:
+            - bytes: Raw image data ready to be saved
+            - dict: Metadata about the extraction method and format
+    
+    Examples:
+        ```python
+        from figwizz.generate import extract_image_data
+        from litellm import image_generation
+        
+        # Generate image
+        response = image_generation(prompt="a sunset", model="gpt-image-1")
+        
+        # Extract image bytes
+        image_bytes, metadata = extract_image_data(response)
+        
+        # Save to file
+        with open('sunset.png', 'wb') as f:
+            f.write(image_bytes)
+        ```
+    
+    Note:
+        - Supports base64 and URL-based image responses
+        - Automatically handles various AI provider response formats
+        - See extract_image_from_genai_response for detailed format support
     """
     return extract_image_from_genai_response(response)
 
 def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', 
                     api_key=None, return_images=True):
     """
-    Generate images from prompts using generative AI.
+    Generate images from text prompts using generative AI models.
+    
+    Uses the litellm library to generate images from various AI providers including
+    OpenAI, Google, and OpenRouter. Each generated image is saved with comprehensive
+    metadata including the prompt, model, timestamp, and API response details.
     
     Args:
-        prompts: List of prompts to generate images from.
-        output_dir: Directory to save the generated images.
-        n_images: Number of images to generate for each prompt.
-        model: Model to use for image generation.
-        api_key: API key for the generative AI model.
-        return_images: Whether to return the generated images as PIL Image objects.
+        prompts (str or list[str]): Text prompt(s) describing the desired image(s).
+            Can be a single string or a list of strings for batch generation.
+        output_dir (str): Directory where generated images and metadata will be saved.
+            Created automatically if it doesn't exist.
+        n_images (int, optional): Number of images to generate for each prompt.
+            Defaults to 1.
+        model (str, optional): Model identifier for image generation. Common options:
+            - 'gpt-image-1' (OpenAI DALL-E)
+            - 'dall-e-3' (OpenAI DALL-E 3)
+            - 'dall-e-2' (OpenAI DALL-E 2)
+            Defaults to 'gpt-image-1'.
+        api_key (str, optional): API key for the AI service. If None, reads from
+            OPENAI_API_KEY environment variable. Defaults to None.
+        return_images (bool, optional): If True, returns list of PIL Image objects.
+            If False, only saves images and returns None. Defaults to True.
         
     Returns:
-        List of PIL Image objects if return_images is True, otherwise None.
+        list[PIL.Image.Image] or None: List of PIL Image objects if return_images=True,
+            otherwise None
+    
+    Raises:
+        ImportError: If litellm is not installed
+        ValueError: If OPENAI_API_KEY is not set and api_key is None
+    
+    Examples:
+        ```python
+        from figwizz import generate_images
+        
+        # Generate a single image
+        images = generate_images(
+            "a serene mountain landscape at sunset",
+            output_dir="generated_images"
+        )
+        images[0].show()
+        
+        # Generate multiple images from multiple prompts
+        prompts = [
+            "a red apple on a wooden table",
+            "a blue ocean with white clouds",
+            "a futuristic city at night"
+        ]
+        images = generate_images(
+            prompts,
+            output_dir="ai_art",
+            n_images=2,  # 2 variations per prompt
+            model="dall-e-3"
+        )
+        
+        # Generate without returning images (saves memory)
+        generate_images(
+            prompts,
+            output_dir="batch_output",
+            return_images=False
+        )
+        ```
+    
+    Note:
+        - Requires litellm: `pip install litellm` or `pip install 'figwizz[genai]'`
+        - Each prompt creates a subdirectory named after the prompt (sanitized)
+        - For each image, saves:
+          * image_N.png - The generated image
+          * image_N_response.json - Full API response
+          * image_N_metadata.json - Curated metadata (prompt, model, timestamp, etc.)
+        - Failed generations are skipped with error messages
+        - Progress is displayed via tqdm progress bars
+        - Image numbering continues from existing images in subdirectories
+        - Prompt text is sanitized for use in directory names (removes special chars)
     """
     
     if not check_optional_import('litellm'):

@@ -1,5 +1,24 @@
 """
-Figure / image scraping functions
+Figure and image scraping utilities.
+
+This module provides functions for downloading images from various sources including:
+- Stock image providers (Pixabay, Unsplash)
+- PDF documents (local files or URLs)
+- Web pages (extracting embedded images)
+
+Supports automatic metadata collection and handles various image formats including
+raster images (PNG, JPEG) and vector graphics (SVG with optional conversion).
+
+Example:
+    ```python
+    from figwizz import download_stock_images, extract_images_from_pdf
+    
+    # Download stock images
+    images = download_stock_images('mountains', 5, 'output/')
+    
+    # Extract from PDF
+    extract_images_from_pdf('paper.pdf', 'figures/')
+    ```
 """
 
 import os, sys, json
@@ -21,6 +40,52 @@ __all__ = [
 # Stock Image Download Functions ----------------------------------------
 
 def download_stock_images(query, n_images, output_dir, provider='pixabay', api_key=None):
+    """
+    Download stock images from various providers (Pixabay or Unsplash).
+    
+    This function provides a unified interface for downloading stock images from
+    multiple providers. Each downloaded image is saved with accompanying metadata
+    in JSON format.
+    
+    Args:
+        query (str): Search query string to find images
+        n_images (int): Number of images to download
+        output_dir (str): Directory path where images and metadata will be saved
+        provider (str, optional): Image provider to use. Options: 'pixabay' or 'unsplash'.
+            Defaults to 'pixabay'.
+        api_key (str, optional): API key for the selected provider. If None, attempts to
+            read from environment variables (PIXABAY_API_KEY or UNSPLASH_ACCESS_KEY).
+            Defaults to None.
+    
+    Returns:
+        list: List of paths to successfully downloaded images
+    
+    Raises:
+        ValueError: If provider is not 'pixabay' or 'unsplash'
+        ValueError: If API key is not provided and not found in environment
+        RuntimeError: If API request fails or returns unexpected format
+    
+    Examples:
+        ```python
+        from figwizz import download_stock_images
+        
+        # Download 5 images of mountains from Pixabay
+        images = download_stock_images('mountains', 5, 'output/mountains')
+        
+        # Download from Unsplash with explicit API key
+        images = download_stock_images(
+            'sunset', 10, 'output/sunsets',
+            provider='unsplash',
+            api_key='your_api_key_here'
+        )
+        ```
+    
+    Note:
+        - Each image is saved as a .jpg file with a sequential name (e.g., image_1.jpg)
+        - Metadata for each image is saved in a corresponding .json file
+        - If the output directory already contains images, numbering continues from the last image
+        - Requires valid API keys from the respective providers (Pixabay or Unsplash)
+    """
     if provider not in ['pixabay', 'unsplash']:
         raise ValueError(f"Invalid provider: {provider}. Must be 'pixabay' or 'unsplash'.")
     
@@ -32,6 +97,41 @@ def download_stock_images(query, n_images, output_dir, provider='pixabay', api_k
 
 # Function to download images from Pixabay
 def download_pixabay_images(query, n_images, output_dir, api_key=None):
+    """
+    Download images from Pixabay API.
+    
+    This function queries the Pixabay API for images matching the search query
+    and downloads high-resolution versions along with comprehensive metadata.
+    
+    Args:
+        query (str): Search query string to find images on Pixabay
+        n_images (int): Maximum number of images to download (up to 200 per request)
+        output_dir (str): Directory path where images and metadata will be saved
+        api_key (str, optional): Pixabay API key. If None, reads from PIXABAY_API_KEY
+            environment variable. Defaults to None.
+    
+    Returns:
+        list: List of paths to successfully downloaded images
+    
+    Raises:
+        ValueError: If PIXABAY_API_KEY is not set and api_key is None
+        RuntimeError: If API request fails or returns unexpected format
+    
+    Examples:
+        ```python
+        from figwizz.scrape import download_pixabay_images
+        
+        # Download 10 nature images
+        images = download_pixabay_images('nature', 10, 'pixabay_images')
+        print(f"Downloaded {len(images)} images")
+        ```
+    
+    Note:
+        - Images are downloaded in 'largeImageURL' format (typically 1280px width)
+        - Metadata includes image URL, dimensions, tags, user info, and more
+        - Sequential numbering continues from existing images in the directory
+        - Failed downloads are skipped with a warning message
+    """
     if api_key is None:
         api_key = os.getenv('PIXABAY_API_KEY')
     if api_key is None:
@@ -102,6 +202,42 @@ def download_pixabay_images(query, n_images, output_dir, api_key=None):
 
 # Function to download images from Unsplash
 def download_unsplash_images(query, n_images, output_dir, api_key=None):
+    """
+    Download images from Unsplash API.
+    
+    This function queries the Unsplash API for images matching the search query
+    and downloads full-resolution versions along with photographer attribution
+    and comprehensive metadata.
+    
+    Args:
+        query (str): Search query string to find images on Unsplash
+        n_images (int): Maximum number of images to download (up to 30 per request)
+        output_dir (str): Directory path where images and metadata will be saved
+        api_key (str, optional): Unsplash Access Key. If None, reads from
+            UNSPLASH_ACCESS_KEY environment variable. Defaults to None.
+    
+    Returns:
+        list: List of paths to successfully downloaded images
+    
+    Raises:
+        ValueError: If UNSPLASH_ACCESS_KEY is not set and api_key is None
+        RuntimeError: If API request fails or returns unexpected format
+    
+    Examples:
+        ```python
+        from figwizz.scrape import download_unsplash_images
+        
+        # Download 5 landscape photos
+        images = download_unsplash_images('landscape', 5, 'unsplash_images')
+        ```
+    
+    Note:
+        - Images are downloaded in 'full' resolution (highest quality available)
+        - Metadata includes photographer attribution, description, tags, likes, and more
+        - Sequential numbering continues from existing images in the directory
+        - Failed downloads are skipped with a warning message
+        - Please respect Unsplash's API guidelines and attribution requirements
+    """
     if api_key is None:
         api_key = os.getenv('UNSPLASH_ACCESS_KEY')
     if api_key is None:

@@ -29,16 +29,46 @@ __all__ = [
 # Input / Image Conversion ----------------------------------------
 
 def convert_image(source_path, target_format, delete_original=False):
-    """Convert an image file to another format.
+    """
+    Convert an image file to another format.
+    
+    Supports conversion between all major image formats including PNG, JPEG, PDF,
+    WEBP, TIFF, and more. Automatically handles transparency for formats that
+    don't support it (like JPEG).
     
     Args:
-        source_path: Path to the source image file, or any supported image input type.
-        target_format: Target format to convert to (e.g., 'jpg', 'png', 'pdf').
-        delete_original: Whether to remove the original file. Defaults to False.
-            Only applies if source_path is a file path string.
+        source_path (str or any): Path to the source image file, or any supported
+            image input type (PIL Image, bytes, numpy array, URL, etc.)
+        target_format (str): Target format to convert to. Supported formats include:
+            'jpg'/'jpeg', 'png', 'pdf', 'webp', 'tiff', 'bmp', 'gif'
+        delete_original (bool, optional): Whether to remove the original file after
+            conversion. Only applies if source_path is a file path string.
+            Defaults to False.
             
     Returns:
-        str: Path to the converted image file.
+        str: Path to the converted image file
+    
+    Examples:
+        ```python
+        from figwizz import convert_image
+        
+        # Convert PNG to JPEG
+        convert_image('image.png', 'jpg')
+        # Creates: image.jpg
+        
+        # Convert to PDF and delete original
+        convert_image('image.png', 'pdf', delete_original=True)
+        # Creates: image.pdf (and deletes image.png)
+        
+        # Convert from URL
+        convert_image('https://example.com/image.png', 'jpg')
+        ```
+    
+    Note:
+        - Automatically adds white background for JPEG/PDF (no transparency support)
+        - Leading dot in format is automatically handled ('jpg' or '.jpg' both work)
+        - For non-path inputs, creates file with default name 'converted_image.{format}'
+        - Output file is created in the same directory as the input file
     """
     # Normalize input to PIL Image
     img = normalize_image_input(source_path)
@@ -66,13 +96,47 @@ def convert_image(source_path, target_format, delete_original=False):
     return result_path
 
 def bytes_to_image(bytes_input):
-    """Convert bytes to a PIL Image object.
+    """
+    Convert bytes to a PIL Image object.
+    
+    Handles both raw bytes and base64-encoded string representations of images.
+    This is particularly useful for handling image data from APIs, databases,
+    or network transfers.
     
     Args:
-        bytes_input: Bytes input to convert to an image.
+        bytes_input (bytes or str): Image data in bytes or base64-encoded string format.
+            If string, will be decoded from base64 first.
     
     Returns:
-        PIL Image object.
+        PIL.Image.Image: PIL Image object ready for manipulation or saving
+    
+    Raises:
+        ValueError: If bytes_input is not a valid bytes or string type
+    
+    Examples:
+        ```python
+        from figwizz import bytes_to_image
+        import requests
+        
+        # From raw bytes
+        response = requests.get('https://example.com/image.jpg')
+        img = bytes_to_image(response.content)
+        img.show()
+        
+        # From base64 string
+        import base64
+        with open('image.jpg', 'rb') as f:
+            b64_string = base64.b64encode(f.read()).decode()
+        img = bytes_to_image(b64_string)
+        
+        # Save the image
+        img.save('output.png')
+        ```
+    
+    Note:
+        - Automatically detects and handles base64-encoded strings
+        - Returns a PIL Image object that can be manipulated or saved
+        - Works with any image format supported by PIL (PNG, JPEG, etc.)
     """
     # check bytes type (e.g. base64, bytes, etc.)
     if isinstance(bytes_input, str):
@@ -90,16 +154,55 @@ def svg_to_image(svg_content, output_path,
     """
     Convert SVG content to a raster image.
     
+    Requires the optional cairosvg library for SVG conversion. This function
+    is useful for converting vector graphics to raster formats like PNG, JPEG,
+    or PDF while maintaining quality through scaling options.
+    
     Args:
-        svg_content: Raw SVG file content (bytes)
-        output_path: Path to save the output file
-           (output type inferred from output_path)
-        width: Optional width for output PNG (in pixels)
-        height: Optional height for output PNG (in pixels)
-        scale: Optional scale factor (e.g., 2.0 for 2x resolution)
+        svg_content (bytes): Raw SVG file content as bytes
+        output_path (str): Path to save the output file. File extension determines
+            output format. Supported: .png, .jpg, .jpeg, .pdf
+        width (int, optional): Output width in pixels. If None, uses SVG's natural
+            width. Defaults to None.
+        height (int, optional): Output height in pixels. If None, uses SVG's natural
+            height. Defaults to None.
+        scale (float, optional): Scale factor for the output (e.g., 2.0 for 2x
+            resolution, 3.0 for 3x). Useful for high-DPI displays. Defaults to None.
     
     Returns:
-        True if successful, False otherwise
+        bool: True if conversion was successful, False if cairosvg is not installed
+            or conversion failed
+    
+    Raises:
+        ValueError: If output_path has an unsupported file extension
+    
+    Examples:
+        ```python
+        from figwizz.convert import svg_to_image
+        
+        # Read SVG file
+        with open('icon.svg', 'rb') as f:
+            svg_data = f.read()
+        
+        # Convert to PNG with default size
+        svg_to_image(svg_data, 'icon.png')
+        
+        # Convert to high-resolution PNG
+        svg_to_image(svg_data, 'icon.png', scale=3.0)
+        
+        # Convert with specific dimensions
+        svg_to_image(svg_data, 'icon.png', width=512, height=512)
+        
+        # Convert to JPEG
+        svg_to_image(svg_data, 'icon.jpg', scale=2.0)
+        ```
+    
+    Note:
+        - Requires cairosvg: `pip install cairosvg`
+        - Returns False with a warning if cairosvg is not installed
+        - Scale and width/height can be used together
+        - Maintains SVG quality during conversion
+        - Prints informative error messages on failure
     """
     
     if output_path.split('.')[-1] not in ['png', 'jpg', 'jpeg', 'pdf']:

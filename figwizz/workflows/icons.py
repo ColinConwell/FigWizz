@@ -1,5 +1,24 @@
 """
-Icon workflow + convenience functions
+Icon workflow and convenience functions.
+
+This module provides high-level workflows for creating icons from images,
+particularly tidyverse-style hexagonal icons (hexicons) commonly used in
+the R community for package logos.
+
+The make_hexicon function is a convenient wrapper around the ngon_crop
+function with sensible defaults for creating hexagonal icons.
+
+Example:
+    ```python
+    from figwizz import make_hexicon
+    
+    # Create a simple hexicon
+    hexicon = make_hexicon('logo.png')
+    hexicon.save('hexicon.png')
+    
+    # Create hexicon with border
+    hexicon = make_hexicon('logo.png', border_size=5, border_color='auto')
+    ```
 """
 
 import os

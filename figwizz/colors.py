@@ -1,4 +1,33 @@
-"""Color processing utilities for FigWizard."""
+"""
+Color processing utilities for FigWizz.
+
+This module provides functions for parsing, extracting, and manipulating colors
+in images. It supports multiple color input formats and provides intelligent
+color analysis for automatic color selection.
+
+Key features:
+- Parse colors from multiple formats (hex, RGB, color names)
+- Extract dominant colors from images
+- Generate contrasting colors for borders and text
+
+Example:
+    ```python
+    from figwizz.colors import parse_color, extract_dominant_color, get_contrasting_color
+    from PIL import Image
+    
+    # Parse different color formats
+    rgb = parse_color('#FF5733')
+    rgb = parse_color('red')
+    rgb = parse_color((255, 87, 51))
+    
+    # Extract dominant color from image
+    img = Image.open('image.png')
+    dominant = extract_dominant_color(img)
+    
+    # Get contrasting color
+    contrast = get_contrasting_color(dominant)
+    ```
+"""
 
 from PIL import ImageColor
 import colorsys
@@ -45,12 +74,36 @@ def extract_dominant_color(img, num_colors=5):
     """
     Extract the dominant color from an image using color quantization.
     
+    Uses color quantization to reduce the image to a small palette and then
+    identifies the most frequent color, excluding very light colors that are
+    likely backgrounds.
+    
     Args:
-        img: PIL Image object
-        num_colors: Number of colors to quantize to
+        img (PIL.Image.Image): PIL Image object to analyze
+        num_colors (int, optional): Number of colors to quantize to. Higher values
+            provide more precision but slower processing. Defaults to 5.
     
     Returns:
-        RGB tuple of the dominant color
+        tuple: RGB tuple (R, G, B) of the dominant color, where each value
+            is in range 0-255
+    
+    Examples:
+        ```python
+        from figwizz.colors import extract_dominant_color
+        from PIL import Image
+        
+        img = Image.open('photo.jpg')
+        dominant = extract_dominant_color(img)
+        print(f"Dominant color: RGB{dominant}")
+        
+        # Use more colors for better precision
+        dominant = extract_dominant_color(img, num_colors=10)
+        ```
+    
+    Note:
+        - Image is resized to 100x100 for faster processing
+        - Very light colors (potential backgrounds) are automatically skipped
+        - Returns the most frequent color after filtering
     """
     # Resize image for faster processing
     img_small = img.copy()
@@ -91,12 +144,42 @@ def get_contrasting_color(rgb, prefer_dark=True):
     """
     Generate a contrasting color for the given RGB color.
     
+    Uses relative luminance calculation to determine if the input color is
+    light or dark, then generates an appropriate contrasting color. Useful
+    for creating borders, text overlays, or UI elements that need to stand
+    out against an image.
+    
     Args:
-        rgb: RGB tuple (R, G, B)
-        prefer_dark: If True, prefer dark contrasting colors
+        rgb (tuple): RGB tuple (R, G, B) where each value is in range 0-255
+        prefer_dark (bool, optional): If True, prefers dark contrasting colors
+            even for dark inputs (creating darker shades). If False, uses
+            pure black/white contrast. Defaults to True.
     
     Returns:
-        RGB tuple of contrasting color
+        tuple: RGB tuple (R, G, B) of the contrasting color
+    
+    Examples:
+        ```python
+        from figwizz.colors import get_contrasting_color
+        
+        # Get contrast for a light color (returns dark)
+        contrast = get_contrasting_color((200, 200, 200))
+        # Returns: (40, 40, 40)
+        
+        # Get contrast for a dark color with prefer_dark=False
+        contrast = get_contrasting_color((50, 50, 50), prefer_dark=False)
+        # Returns: (255, 255, 255)
+        
+        # Use with extracted dominant color
+        from figwizz.colors import extract_dominant_color
+        dominant = extract_dominant_color(img)
+        border_color = get_contrasting_color(dominant)
+        ```
+    
+    Note:
+        - Uses standard relative luminance formula (0.299*R + 0.587*G + 0.114*B)
+        - When prefer_dark=True, creates darker/more saturated versions for dark inputs
+        - When prefer_dark=False, returns pure black (0,0,0) or white (255,255,255)
     """
     r, g, b = rgb
     
