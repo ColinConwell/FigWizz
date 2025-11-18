@@ -28,7 +28,7 @@ Quick Start:
     figwizz.generate_images(['a red apple', 'a blue ocean'], 'generated/')
     ```
 
-For more information, see the documentation at: https://github.com/colinconwell/FigWizard
+For more information, see the documentation at: https://github.com/colinconwell/FigWizz
 """
 
 # __name__ = "figwizz"

@@ -1,4 +1,4 @@
-# FigWizard Justfile
+# FigWizz Justfile
 # Development automation commands
 
 # Default recipe (list all commands)

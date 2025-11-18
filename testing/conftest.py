@@ -1,5 +1,5 @@
 """
-Pytest configuration and fixtures for FigWizard tests
+Pytest configuration and fixtures for FigWizz tests
 """
 
 import pytest

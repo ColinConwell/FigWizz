@@ -1,8 +1,8 @@
 site_name: FigWizz
 site_description: Python toolkit for programmatic figure design
-site_url: https://colinconwell.github.io/FigWizard
-repo_url: https://github.com/ColinConwell/FigWizard
-repo_name: FigWizard
+site_url: https://colinconwell.github.io/FigWizz
+repo_url: https://github.com/ColinConwell/FigWizz
+repo_name: FigWizz
 docs_dir: webdocs
 
 theme:

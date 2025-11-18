@@ -149,7 +149,7 @@ figwizz extract-images https://example.com/page --output-dir scraped/
 
 ## Documentation
 
-Full documentation available at: [https://colinconwell.github.io/FigWizard](https://colinconwell.github.io/FigWizard)
+Full documentation available at: [https://colinconwell.github.io/FigWizz](https://colinconwell.github.io/FigWizz)
 
 ## Environment Variables
 
