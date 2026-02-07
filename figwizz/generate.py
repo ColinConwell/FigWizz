@@ -14,12 +14,14 @@ Example:
 
 import os, re, json
 from copy import copy
+from io import BytesIO
 from datetime import datetime
 from typing import Any, Dict
 from PIL import Image
 from tqdm.auto import tqdm
 
 from .utils import check_optional_import
+from .utils.images import normalize_image_input
 
 from .workflows.genai import (
     make_json_serializable,
@@ -48,7 +50,7 @@ def extract_image_data(response: Any) -> tuple[bytes, Dict[str, Any]]:
         from litellm import image_generation
         
         # Generate image
-        response = image_generation(prompt="a sunset", model="gpt-image-1")
+        response = image_generation(prompt="a sunset", model="gpt-image-1.5")
         
         # Extract image bytes
         image_bytes, metadata = extract_image_data(response)
@@ -65,14 +67,20 @@ def extract_image_data(response: Any) -> tuple[bytes, Dict[str, Any]]:
     """
     return extract_image_from_genai_response(response)
 
-def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1', 
-                    api_key=None, return_images=True):
+def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1.5', 
+                    seed_image=None, api_key=None, return_images=True):
     """
     Generate images from text prompts using generative AI models.
     
     Uses the litellm library to generate images from various AI providers including
     OpenAI, Google, and OpenRouter. Each generated image is saved with comprehensive
     metadata including the prompt, model, timestamp, and API response details.
+    
+    When a seed_image is provided, the function uses the image editing endpoint
+    (litellm.image_edit) to generate images that reference the seed image. This
+    is useful for style transfer, modifications, or using an existing image as a
+    starting point. The seed_image is normalized via figwizz's image handlers,
+    so it can be a file path, URL, PIL Image, bytes, numpy array, or base64 string.
     
     Args:
         prompts (str or list[str]): Text prompt(s) describing the desired image(s).
@@ -82,10 +90,16 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1',
         n_images (int, optional): Number of images to generate for each prompt.
             Defaults to 1.
         model (str, optional): Model identifier for image generation. Common options:
-            - 'gpt-image-1' (OpenAI DALL-E)
+            - 'gpt-image-1.5' (OpenAI GPT Image 1.5, latest)
+            - 'gpt-image-1' (OpenAI GPT Image 1)
             - 'dall-e-3' (OpenAI DALL-E 3)
             - 'dall-e-2' (OpenAI DALL-E 2)
-            Defaults to 'gpt-image-1'.
+            Defaults to 'gpt-image-1.5'.
+        seed_image (optional): A reference image to use as a starting point for
+            generation. Accepts any format supported by normalize_image_input:
+            file path, URL, PIL Image, bytes, numpy array, base64 string, or
+            file-like object. When provided, the image editing endpoint is used
+            instead of the generation endpoint. Defaults to None.
         api_key (str, optional): API key for the AI service. If None, reads from
             OPENAI_API_KEY environment variable. Defaults to None.
         return_images (bool, optional): If True, returns list of PIL Image objects.
@@ -120,7 +134,23 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1',
             prompts,
             output_dir="ai_art",
             n_images=2,  # 2 variations per prompt
-            model="dall-e-3"
+            model="gpt-image-1"
+        )
+        
+        # Generate with a seed image (uses image editing endpoint)
+        images = generate_images(
+            "transform this into a watercolor painting",
+            output_dir="edited_images",
+            seed_image="reference_photo.png"
+        )
+        
+        # Seed image can also be a PIL Image or URL
+        from PIL import Image
+        ref = Image.open("sketch.png")
+        images = generate_images(
+            "render this sketch as a photorealistic scene",
+            output_dir="rendered",
+            seed_image=ref
         )
         
         # Generate without returning images (saves memory)
@@ -142,12 +172,14 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1',
         - Progress is displayed via tqdm progress bars
         - Image numbering continues from existing images in subdirectories
         - Prompt text is sanitized for use in directory names (removes special chars)
+        - When seed_image is provided, litellm.image_edit() is used instead of
+          litellm.image_generation(), routing through OpenAI's /images/edits endpoint
     """
     
     if not check_optional_import('litellm'):
         raise ImportError("litellm is required for image generation. Install it with: pip install litellm or pip install 'figwizz[genai]'")
     
-    from litellm import image_generation
+    from litellm import image_generation, image_edit
     
     if api_key is None:
         api_key = os.getenv('OPENAI_API_KEY')
@@ -157,6 +189,16 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1',
     
     if not isinstance(prompts, list):
         prompts = [prompts]
+    
+    # Normalize seed image to a BytesIO file-like object if provided
+    seed_image_file = None
+    if seed_image is not None:
+        pil_seed = normalize_image_input(seed_image, return_type='pil')
+        seed_buffer = BytesIO()
+        pil_seed.save(seed_buffer, format='PNG')
+        seed_buffer.seek(0)
+        seed_buffer.name = 'seed_image.png'
+        seed_image_file = seed_buffer
     
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
@@ -189,13 +231,24 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1',
             response_path = None
             
             try:
-                # Generate the image
-                response = image_generation(
-                    prompt=prompt, 
-                    size='1024x1024', 
-                    model=model,
-                    api_key=api_key,
-                )
+                if seed_image_file is not None:
+                    # Use image editing endpoint with seed image as reference
+                    seed_image_file.seek(0)
+                    response = image_edit(
+                        prompt=prompt,
+                        image=seed_image_file,
+                        size='1024x1024',
+                        model=model,
+                        api_key=api_key,
+                    )
+                else:
+                    # Standard image generation (no seed image)
+                    response = image_generation(
+                        prompt=prompt, 
+                        size='1024x1024', 
+                        model=model,
+                        api_key=api_key,
+                    )
                 
             except Exception as error:
                 print(f"Error generating image for prompt: {prompt}")
@@ -245,6 +298,7 @@ def generate_images(prompts, output_dir, n_images=1, model='gpt-image-1',
                     'timestamp': datetime.now().isoformat(),
                     'image_path': image_path,
                     'response_path': response_path,
+                    'seed_image': seed_image is not None,
                     'extraction_info': extraction_metadata
                 }
                 
